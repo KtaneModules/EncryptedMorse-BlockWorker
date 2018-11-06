@@ -1,0 +1,216 @@
+fileFormatVersion: 2
+guid: 26504462a59f1904d82d2cdab31c4830
+timeCreated: 1541170288
+licenseType: Free
+ModelImporter:
+  serializedVersion: 21
+  fileIDToRecycleName:
+    100000: Box001
+    100002: Box002
+    100004: Box003
+    100006: Box004
+    100008: Box005
+    100010: Capsule001
+    100012: Component_PuzzleBackground
+    100014: //RootNode
+    100016: BinaryLight0
+    100018: BinaryLight1
+    100020: BinaryLightHolder
+    100022: Button1
+    100024: Button1Base
+    100026: Button2
+    100028: Button2Base
+    100030: DecoBox
+    100032: DecoWire1
+    100034: DecoWire2
+    100036: DecoWire3
+    100038: DecoWire4
+    100040: DecoWire5
+    100042: DecoWire6
+    100044: KnobBase
+    100046: MorseKnob
+    100048: MorseLight
+    100050: MorseLightHolder
+    100052: ResetButton
+    400000: Box001
+    400002: Box002
+    400004: Box003
+    400006: Box004
+    400008: Box005
+    400010: Capsule001
+    400012: Component_PuzzleBackground
+    400014: //RootNode
+    400016: BinaryLight0
+    400018: BinaryLight1
+    400020: BinaryLightHolder
+    400022: Button1
+    400024: Button1Base
+    400026: Button2
+    400028: Button2Base
+    400030: DecoBox
+    400032: DecoWire1
+    400034: DecoWire2
+    400036: DecoWire3
+    400038: DecoWire4
+    400040: DecoWire5
+    400042: DecoWire6
+    400044: KnobBase
+    400046: MorseKnob
+    400048: MorseLight
+    400050: MorseLightHolder
+    400052: ResetButton
+    2300000: Box001
+    2300002: Box002
+    2300004: Box003
+    2300006: Box004
+    2300008: Box005
+    2300010: Capsule001
+    2300012: Component_PuzzleBackground
+    2300014: BinaryLight0
+    2300016: BinaryLight1
+    2300018: BinaryLightHolder
+    2300020: Button1
+    2300022: Button1Base
+    2300024: Button2
+    2300026: Button2Base
+    2300028: DecoBox
+    2300030: DecoWire1
+    2300032: DecoWire2
+    2300034: DecoWire3
+    2300036: DecoWire4
+    2300038: DecoWire5
+    2300040: DecoWire6
+    2300042: KnobBase
+    2300044: MorseKnob
+    2300046: MorseLight
+    2300048: MorseLightHolder
+    2300050: ResetButton
+    3300000: Box001
+    3300002: Box002
+    3300004: Box003
+    3300006: Box004
+    3300008: Box005
+    3300010: Capsule001
+    3300012: Component_PuzzleBackground
+    3300014: BinaryLight0
+    3300016: BinaryLight1
+    3300018: BinaryLightHolder
+    3300020: Button1
+    3300022: Button1Base
+    3300024: Button2
+    3300026: Button2Base
+    3300028: DecoBox
+    3300030: DecoWire1
+    3300032: DecoWire2
+    3300034: DecoWire3
+    3300036: DecoWire4
+    3300038: DecoWire5
+    3300040: DecoWire6
+    3300042: KnobBase
+    3300044: MorseKnob
+    3300046: MorseLight
+    3300048: MorseLightHolder
+    3300050: ResetButton
+    4300000: Component_PuzzleBackground
+    4300002: Box001
+    4300004: Box002
+    4300006: Box003
+    4300008: Capsule001
+    4300010: Box004
+    4300012: Box005
+    4300014: Button1
+    4300016: Button2
+    4300018: MorseLight
+    4300020: BinaryLightHolder
+    4300022: MorseLightHolder
+    4300024: BinaryLight0
+    4300026: BinaryLight1
+    4300028: KnobBase
+    4300030: DecoBox
+    4300032: DecoWire1
+    4300034: DecoWire2
+    4300036: DecoWire3
+    4300038: DecoWire4
+    4300040: DecoWire5
+    4300042: DecoWire6
+    4300044: Button1Base
+    4300046: Button2Base
+    4300048: MorseKnob
+    4300050: ResetButton
+    7400000: Take 001
+    9500000: //RootNode
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 2
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
