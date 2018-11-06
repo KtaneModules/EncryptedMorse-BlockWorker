@@ -17,7 +17,7 @@ public class ModuleSettings {
     public bool ColorblindMode = false;
     public string HowToUse1 = "Set to true to enable colo(u)rblind mode.";
 
-    public float morseTickTime = .2f;
+    public float morseTickTime = .25f;
     public string HowToUse2 = "How long a morse time unit is, in seconds.";
 
     public float binTickTime = .5f;

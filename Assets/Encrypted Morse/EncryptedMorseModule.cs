@@ -27,7 +27,7 @@ public class EncryptedMorseModule : MonoBehaviour {
     private bool activated = false, solved = false;
     private bool morseEnabled = true, binEnabled = true;
 
-    private ModSettings settings = new ModSettings("encryptedMorse");
+    private ModSettings settings = new ModSettings("EncryptedMorse");
 
     private int morseFrameCounter;
     private int binFrameCounter;
@@ -47,7 +47,7 @@ public class EncryptedMorseModule : MonoBehaviour {
     private int[] correctResponseMorse;
     private int currentResponseIndex = 0;
 
-
+    #region Initialization & Updates
     // Use this for initialization
     void Start() {
         BombModule.OnActivate += OnActivate;
@@ -137,7 +137,7 @@ public class EncryptedMorseModule : MonoBehaviour {
         callResponseIndex = Random.Range(0, calls.Length); //choose random call/response pair
         call = calls[callResponseIndex];
         response = responses[callResponseIndex];
-        if (Random.value >= .9) { //10% chance of "corrupting" call, causing "otherwise" response condition
+        if (Random.value >= .85) { //15% chance of "corrupting" call, causing "otherwise" response condition
             int swapIndex = Random.Range(0, call.Length);
             string newCall = call.Substring(0, swapIndex) + (char)Random.Range('A', 'Z' + 1);
             if (swapIndex < call.Length - 1) call = newCall + call.Substring(swapIndex + 1);
@@ -295,7 +295,9 @@ public class EncryptedMorseModule : MonoBehaviour {
     void OnActivate() {
         activated = true;
     }
+    #endregion
 
+    #region Selectable Handlers
     bool OnKnobPress() {
         Audio.PlaySoundAtTransform("switch", transform);
         if (keySelected) {
@@ -378,7 +380,7 @@ public class EncryptedMorseModule : MonoBehaviour {
             morseEnabled = false;
         } else {
             MorseSwitchWireRenderer.material.color = switchWireOn;
-            morsePos = 0;
+            morsePos = -1;
             morseTick = 0;
             morseFrameCounter = 0;
             morseEnabled = true;
@@ -394,14 +396,16 @@ public class EncryptedMorseModule : MonoBehaviour {
             binEnabled = false;
         } else {
             BinSwitchWireRenderer.material.color = switchWireOn;
-            binPos = 0;
+            binPos = -1;
             binTick = 0;
             binFrameCounter = 0;
             binEnabled = true;
         }
         return false;
     }
+    #endregion
 
+    #region Visual Methods
     void ShowMorseMessage(bool on) {
         MorseLight.material = on ? MorseMessageMat : LightOffMat;
         MorseLightL.color = messageMorseC;
@@ -441,7 +445,9 @@ public class EncryptedMorseModule : MonoBehaviour {
             BinLight0L.enabled = on;
         }
     }
+    #endregion
 
+    #region Logic & Utility Methods
     int[] MorseEncode(string s, bool noSpaces = false) {
         var mc = new List<int>();
         foreach (char c in s.ToUpperInvariant()) {
@@ -706,4 +712,38 @@ public class EncryptedMorseModule : MonoBehaviour {
     void DebugLog(string message) {
         Debug.Log("[Encrypted Morse #" + logNum + "] " + message);
     }
+    #endregion
+
+    #region TwitchPlays
+
+    #pragma warning disable 0414
+    string TwitchHelpMessage = "Transmit a response using 'submit .--...-'. Toggle the knob using 'toggle knob'. Toggle the morse and binary lights using 'toggle morse' and 'toggle binary'. Press the reset button using 'reset'.";
+    #pragma warning restore 0414
+
+    public void TwitchHandleForcedSolve() {
+        DebugLog("Module solved by TP command.");
+        SolveModule();
+    }
+
+    public KMSelectable[] ProcessTwitchCommand(string cmd) {
+        cmd = cmd.ToLowerInvariant().Trim();
+        if (cmd == "reset") return new KMSelectable[] { ResetButton };
+        else if (cmd.StartsWith("submit")) {
+            var buttons = new List<KMSelectable>();
+            foreach (char c in cmd.Substring(7)) {
+                if (c == '.') buttons.Add(DotButton);
+                else if (c == '-') buttons.Add(DashButton);
+                else throw new System.FormatException("Invalid morse character: '" + c + "'");
+            }
+            return buttons.ToArray();
+        } else if (cmd.StartsWith("toggle")) {
+            switch (cmd.Substring(7)) {
+                case "knob": return new KMSelectable[] { MorseKnob };
+                case "morse": return new KMSelectable[] { MorseSwitchWire };
+                case "binary": return new KMSelectable[] { BinSwitchWire };
+                default: throw new System.FormatException("Invalid command: '" + cmd + "'");
+            }
+        } else throw new System.FormatException("Invalid command: '" + cmd + "'");
+    }
+    #endregion
 }

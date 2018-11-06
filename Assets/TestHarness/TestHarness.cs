@@ -339,6 +339,8 @@ public class FakeBombInfo : MonoBehaviour
             string r = w.GetResult(queryKey, queryInfo);
             if (r != null) responses.Add(r);
         }
+        if (queryKey == "Unity")
+            responses.Add(JsonConvert.SerializeObject(new Dictionary<string, bool>() { { "Unity", true } }));
         return responses;
     }
 
@@ -576,9 +578,6 @@ public class TestHarness : MonoBehaviour
     TestSelectable currentSelectable;
     TestSelectableArea currentSelectableArea;
 
-    bool gamepadEnabled = false;
-    TestSelectable lastSelected;
-
     AudioSource audioSource;
     public List<AudioClip> AudioClips;
 
@@ -664,15 +663,12 @@ public class TestHarness : MonoBehaviour
         KMNeedyModule[] needyModules = FindObjectsOfType<KMNeedyModule>();
         fakeInfo.needyModules = needyModules.ToList();
         currentSelectable.Children = new TestSelectable[modules.Length + needyModules.Length];
-        currentSelectable.ChildRowLength = currentSelectable.Children.Length;
         for (int i = 0; i < modules.Length; i++)
         {
             KMBombModule mod = modules[i];
 
-            TestSelectable testSelectable = modules[i].GetComponent<TestSelectable>();
-            currentSelectable.Children[i] = testSelectable;
-            testSelectable.Parent = currentSelectable;
-            testSelectable.x = i;
+            currentSelectable.Children[i] = modules[i].GetComponent<TestSelectable>();
+            modules[i].GetComponent<TestSelectable>().Parent = currentSelectable;
 
             fakeInfo.modules.Add(new KeyValuePair<KMBombModule, bool>(modules[i], false));
             modules[i].OnPass = delegate ()
@@ -702,10 +698,8 @@ public class TestHarness : MonoBehaviour
 
         for (int i = 0; i < needyModules.Length; i++)
         {
-            TestSelectable testSelectable = needyModules[i].GetComponent<TestSelectable>();
-            currentSelectable.Children[modules.Length + i] = testSelectable;
-            testSelectable.Parent = currentSelectable;
-            testSelectable.x = modules.Length + i;
+            currentSelectable.Children[modules.Length + i] = needyModules[i].GetComponent<TestSelectable>();
+            needyModules[i].GetComponent<TestSelectable>().Parent = currentSelectable;
 
             needyModules[i].OnPass = delegate ()
             {
@@ -745,36 +739,25 @@ public class TestHarness : MonoBehaviour
 
     void Update()
     {
-        if (!gamepadEnabled)
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Debug.DrawRay(ray.origin, ray.direction);
+        RaycastHit hit;
+        int layerMask = 1 << 11;
+        bool rayCastHitSomething = Physics.Raycast(ray, out hit, 1000, layerMask);
+        if (rayCastHitSomething)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            Debug.DrawRay(ray.origin, ray.direction);
-            RaycastHit hit;
-            int layerMask = 1 << 11;
-            bool rayCastHitSomething = Physics.Raycast(ray, out hit, 1000, layerMask);
-
-            if (rayCastHitSomething) {
-                TestSelectableArea hitArea = hit.collider.GetComponent<TestSelectableArea>();
-                if (hitArea != null)
-                {
-                    if (currentSelectableArea != hitArea)
-                    {
-                        if (currentSelectableArea != null)
-                        {
-                            currentSelectableArea.Selectable.Deselect();
-                        }
-
-                        hitArea.Selectable.Select();
-                        currentSelectableArea = hitArea;
-                    }
-                }
-                else
+            TestSelectableArea hitArea = hit.collider.GetComponent<TestSelectableArea>();
+            if (hitArea != null)
+            {
+                if (currentSelectableArea != hitArea)
                 {
                     if (currentSelectableArea != null)
                     {
                         currentSelectableArea.Selectable.Deselect();
-                        currentSelectableArea = null;
                     }
+
+                    hitArea.Selectable.Select();
+                    currentSelectableArea = hitArea;
                 }
             }
             else
@@ -785,68 +768,42 @@ public class TestHarness : MonoBehaviour
                     currentSelectableArea = null;
                 }
             }
-
-            if (Input.GetMouseButtonDown(0)) Interact();
-            if (Input.GetMouseButtonUp(0)) InteractEnded();
-            if (Input.GetMouseButtonDown(1)) Cancel();
         }
         else
         {
-            TestSelectable previousSelectable = lastSelected;
-            if (Input.GetKeyDown(KeyCode.X) || Input.GetKeyDown(KeyCode.Return)) Interact();
-            if (Input.GetKeyUp(KeyCode.X) || Input.GetKeyUp(KeyCode.Return)) InteractEnded();
-            if (Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.Backspace)) Cancel();
-            if (Input.GetKeyDown(KeyCode.LeftArrow)) EmulateDirection(Direction.Left);
-            if (Input.GetKeyDown(KeyCode.RightArrow)) EmulateDirection(Direction.Right);
-            if (Input.GetKeyDown(KeyCode.UpArrow)) EmulateDirection(Direction.Up);
-            if (Input.GetKeyDown(KeyCode.DownArrow)) EmulateDirection(Direction.Down);
-
-            if (previousSelectable != lastSelected)
+            if (currentSelectableArea != null)
             {
-                previousSelectable.Deselect();
-                lastSelected.Select();
-                currentSelectableArea = lastSelected.SelectableArea;
+                currentSelectableArea.Selectable.Deselect();
+                currentSelectableArea = null;
             }
         }
-    }
 
-    void EmulateDirection(Direction direction)
-    {
-        TestSelectable selectable = lastSelected.GetNearestSelectable(direction);
-        if (selectable)
+        if (Input.GetMouseButtonDown(0))
         {
-            lastSelected = selectable;
-            currentSelectable.LastSelectedChild = lastSelected;
+            if (currentSelectableArea != null && currentSelectableArea.Selectable.Interact())
+            {
+                currentSelectable.DeactivateChildSelectableAreas(currentSelectableArea.Selectable);
+                currentSelectable = currentSelectableArea.Selectable;
+                currentSelectable.ActivateChildSelectableAreas();
+            }
         }
-    }
 
-    void Interact()
-    {
-        if (currentSelectableArea != null && currentSelectableArea.Selectable.Interact())
+        if (Input.GetMouseButtonUp(0))
         {
-            currentSelectable.DeactivateChildSelectableAreas(currentSelectableArea.Selectable);
-            currentSelectable = currentSelectableArea.Selectable;
-            currentSelectable.ActivateChildSelectableAreas();
-            lastSelected = currentSelectable.GetCurrentChild();
+            if (currentSelectableArea != null)
+            {
+                currentSelectableArea.Selectable.InteractEnded();
+            }
         }
-    }
 
-    void InteractEnded()
-    {
-        if (currentSelectableArea != null)
+        if (Input.GetMouseButtonDown(1))
         {
-            currentSelectableArea.Selectable.InteractEnded();
-        }
-    }
-
-    void Cancel()
-    {
-        if (currentSelectable.Parent != null && currentSelectable.Cancel())
-        {
-            currentSelectable.DeactivateChildSelectableAreas(currentSelectable.Parent);
-            currentSelectable = currentSelectable.Parent;
-            currentSelectable.ActivateChildSelectableAreas();
-            lastSelected = currentSelectable.GetCurrentChild();
+            if (currentSelectable.Parent != null && currentSelectable.Cancel())
+            {
+                currentSelectable.DeactivateChildSelectableAreas(currentSelectable.Parent);
+                currentSelectable = currentSelectable.Parent;
+                currentSelectable.ActivateChildSelectableAreas();
+            }
         }
     }
 
@@ -877,7 +834,6 @@ public class TestHarness : MonoBehaviour
         foreach (KMSelectable selectable in selectables)
         {
             TestSelectable testSelectable = selectable.gameObject.GetComponent<TestSelectable>();
-            testSelectable.Parent = selectable.Parent ? selectable.Parent.GetComponent<TestSelectable>() : null;
             testSelectable.Children = new TestSelectable[selectable.Children.Length];
             for (int i = 0; i < selectable.Children.Length; i++)
             {
@@ -1074,22 +1030,12 @@ public class TestHarness : MonoBehaviour
             fakeInfo.OnLightsOff();
         }
 
-        bool previous = gamepadEnabled;
-        gamepadEnabled = GUILayout.Toggle(gamepadEnabled, "Emulate Gamepad");
-        if (!previous && gamepadEnabled)
-        {
-            lastSelected = currentSelectable.GetCurrentChild();
-            lastSelected.Select();
-            currentSelectableArea = lastSelected.SelectableArea;
-        }
-
         GUILayout.Label("Time remaining: " + fakeInfo.GetFormattedTime());
 
         GUILayout.Space(10);
 
-        GUI.SetNextControlName("commandField");
         command = GUILayout.TextField(command);
-        if ((GUILayout.Button("Simulate Twitch Command") || Event.current.keyCode == KeyCode.Return) && GUI.GetNameOfFocusedControl() == "commandField" && command != "")
+        if ((GUILayout.Button("Simulate Twitch Command") || Event.current.keyCode == KeyCode.Return) && command != "")
         {
             Debug.Log("Twitch Command: " + command);
 
