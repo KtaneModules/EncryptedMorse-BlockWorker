@@ -13,7 +13,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: EncryptedMorse
   title: Encrypted Morse
-  description: Decrypt a morse message in two steps and respond accordingly.
+  description: 'Decrypt a morse message in two steps and respond accordingly.
+
+
+    moduleID: EncryptedMorse'
   version: 1.0.0
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 85a13456ffcd056418a32cf141e4ed76, type: 3}
