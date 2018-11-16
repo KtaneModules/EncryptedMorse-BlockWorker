@@ -8,16 +8,16 @@ public class EncryptedMorseModule : MonoBehaviour {
     public KMBombInfo BombInfo;
     public KMBombModule BombModule;
     public KMAudio Audio;
-    public KMSelectable MorseKnob, DotButton, DashButton, ResetButton, MorseSwitchWire, BinSwitchWire;
-    public MeshRenderer MorseLight, BinLight0, BinLight1, MorseSwitchWireRenderer, BinSwitchWireRenderer;
+    public KMSelectable MorseKnob, DotButton, DashButton, ResetButton, MorseSwitchWire;
+    public MeshRenderer MorseLight, MorseSwitchWireRenderer;
     public Transform MorseKnobTransform;
-    public Light MorseLightL, BinLight0L, BinLight1L;
-    public Material MorseMessageMat, MorseKeyMat, Bin0Mat, Bin1Mat, LightOffMat;
+    public Light MorseLightL;
+    public Material MorseMessageMat, MorseKeyMat, LightOffMat, SolvedMat;
+    public TextMesh BinText;
 
     private static Color messageMorseC = new Color(.9f, .45f, .05f);
     private static Color keyMorseC = new Color(.05f, .45f, .9f);
-    private static Color binZero = new Color(.9f, .1f, .05f);
-    private static Color binOne = new Color(.1f, .9f, .05f);
+    private static Color solvedC = new Color(.1f, .9f, .05f);
     private static Color switchWireOff = new Color(.7f, 0, 0);
     private static Color switchWireOn = new Color(.36f, .52f, 1f);
     private static Color switchWireSolved = new Color(.1f, .7f, .1f);
@@ -25,21 +25,20 @@ public class EncryptedMorseModule : MonoBehaviour {
     private static int lastLogNum = 0;
     private int logNum;
     private bool activated = false, solved = false;
-    private bool morseEnabled = true, binEnabled = true;
+    private bool morseEnabled = true;
 
     private ModSettings settings = new ModSettings("EncryptedMorse");
 
     private int morseFrameCounter;
-    private int binFrameCounter;
 
     private int[] messageMorse, keyMorse, binStrA, binStrB;
-    private int morsePos = -1, binPos = -1;
-    private int morseTick = 0, binTick = 0;
+    private int morsePos = -1;
+    private int morseTick = 0;
     private bool keySelected = false;
 
-    private static readonly string[] calls = { "DETONATE", "READYNOW", "WEREDEAD", "SHESELLS", "REMEMBER", "GREATJOB", "SOLOTHIS" };
-    private static readonly string[] responses = { "PLEASENO", "CHEESECAKE", "SADFACE", "SEASHELLS", "SOUVENIR", "THANKYOU", "IDAREYOU" };
-    private const string otherwiseResponse = "EXCUSEME";
+    private static readonly string[] calls = { "DETONATE", "READYNOW", "WEREDEAD", "SHESELLS", "REMEMBER", "GREATJOB", "SOLOTHIS", "KEEPTALK" };
+    private static readonly string[] responses = { "PLEASENO", "CHEESECAKE", "SADFACE", "SEASHELLS", "SOUVENIR", "THANKYOU", "IDAREYOU", "NOEXPLODE" };
+    private const string solvedText = "YOU\nSOLVED\nTHIS\nMODULE\nGOOD\nJOB";
     private int callResponseIndex;
     private string call, response;
     private string message, key;
@@ -56,7 +55,6 @@ public class EncryptedMorseModule : MonoBehaviour {
         DashButton.OnInteract += OnDashPress;
         ResetButton.OnInteract += OnResetPress;
         MorseSwitchWire.OnInteract += OnMorseSwitch;
-        BinSwitchWire.OnInteract += OnBinSwitch;
         logNum = ++lastLogNum;
         settings.ReadSettings();
         Init();
@@ -64,10 +62,7 @@ public class EncryptedMorseModule : MonoBehaviour {
 
     void Init() {
         morseFrameCounter = 0;
-        binFrameCounter = 0;
         ShowMorseMessage(false);
-        ShowBin0(false);
-        ShowBin1(false);
 
         binStrA = new int[42]; //start with random binStrA
         for (int i = 0; i < 42; i++) binStrA[i] = Random.value > .5 ? 1 : 0;
@@ -137,13 +132,6 @@ public class EncryptedMorseModule : MonoBehaviour {
         callResponseIndex = Random.Range(0, calls.Length); //choose random call/response pair
         call = calls[callResponseIndex];
         response = responses[callResponseIndex];
-        if (Random.value >= .85) { //15% chance of "corrupting" call, causing "otherwise" response condition
-            int swapIndex = Random.Range(0, call.Length);
-            string newCall = call.Substring(0, swapIndex) + (char)Random.Range('A', 'Z' + 1);
-            if (swapIndex < call.Length - 1) call = newCall + call.Substring(swapIndex + 1);
-            else call = newCall;
-            response = otherwiseResponse;
-        }
 
         key = "";
         encryptedCall = "";
@@ -154,6 +142,18 @@ public class EncryptedMorseModule : MonoBehaviour {
             char encryptedChar = (char)(call[i] - (keyChar - 0x40)); //encrypt char
             while (encryptedChar < 0x41) encryptedChar += (char)26; //keep char in valid range
             encryptedCall += encryptedChar;
+        }
+
+        string logKey = key;
+        string logEncryptedCall = encryptedCall; //save encCall and key for logging
+        bool swapped = false;
+        int numVowels = 0;
+        foreach (char c in encryptedCall) if (c == 'A' || c == 'E' || c == 'I' || c == 'O' || c == 'U') numVowels++; //count vowels in encryptedCall
+        if (numVowels > 1) { //if more than 1 vowel, swap first with fifth char and second with eighth char in call and key
+            key = "" + key[4] + key[7] + key[2] + key[3] + key[0] + key[5] + key[6] + key[1];
+            encryptedCall = "" + encryptedCall[4] + encryptedCall[7] + encryptedCall[2] + encryptedCall[3] 
+                                + encryptedCall[0] + encryptedCall[5] + encryptedCall[6] + encryptedCall[1];
+            swapped = true;
         }
         keyMorse = MorseEncode(key);
 
@@ -182,7 +182,14 @@ public class EncryptedMorseModule : MonoBehaviour {
         correctResponseMorse = MorseEncode(response, true); //convert correct response to morse, without letter spaces
 
         string binStrALog = "";
-        for (int i = 0; i < 42; i++) binStrALog += binStrA[i];
+        string binStrADisp = "";
+        for (int i = 0; i < 42; i++) {
+            binStrALog += binStrA[i];
+            binStrADisp += binStrA[i];
+            if (i % 7 == 6 && i < 41) binStrADisp += '\n';
+        }
+        BinText.text = binStrADisp;
+
         DebugLog("Binary sequence A (received): " + binStrALog);
         if (batteries == ports) DebugLog("First half of generated binary sequence will be reversed (#batteries = #ports)");
         string binStrBLog = "";
@@ -191,7 +198,13 @@ public class EncryptedMorseModule : MonoBehaviour {
         DebugLog("Received message: " + message);
         DebugLog("Received key: " + key);
 
-        DebugLog("Message after binary decryption (first step): " + encryptedCall);
+        DebugLog("Intermediate message after binary decryption (first step): " + encryptedCall);
+        if (swapped) {
+            DebugLog("Intermediate message contains more than one vowel. Swapping message and key characters.");
+            DebugLog("New intermediate message: " + logEncryptedCall);
+            DebugLog("New key: " + logKey);
+        }
+
         DebugLog("Final message after decryption: " + call);
         DebugLog("Correct response: " + response);
     }
@@ -201,10 +214,9 @@ public class EncryptedMorseModule : MonoBehaviour {
         if (!activated) return;
 
         if (solved) {
-            MorseLight.material = Bin1Mat;
-            MorseLightL.color = binOne;
+            MorseLight.material = SolvedMat;
+            MorseLightL.color = solvedC;
             MorseLightL.enabled = true;
-            ShowBin0(false);
             return;
         }
 
@@ -250,44 +262,6 @@ public class EncryptedMorseModule : MonoBehaviour {
                         break;
                 }
                 if (morsePos >= morse.Length) morsePos = -1;
-            }
-        }
-
-        if (!binEnabled) {
-            ShowBin0(false);
-            ShowBin1(false);
-        } else if (++binFrameCounter * Time.deltaTime >= settings.Settings.binTickTime) {
-            binFrameCounter = 0;
-
-            if (binPos < 0) {
-                ShowBin0(false);
-                ShowBin1(false);
-                if (++binTick > 9) {
-                    binTick = 0;
-                    binPos++;
-                }
-            } else {
-                switch (binStrA[binPos]) {
-                    case 0:
-                        if (++binTick <= 1) ShowBin0(true);
-                        else {
-                            ShowBin0(false);
-                            ShowBin1(false);
-                            binTick = 0;
-                            binPos++;
-                        }
-                        break;
-                    case 1:
-                        if (++binTick <= 1) ShowBin1(true);
-                        else {
-                            ShowBin0(false);
-                            ShowBin1(false);
-                            binTick = 0;
-                            binPos++;
-                        }
-                        break;
-                }
-                if (binPos >= binStrA.Length) binPos = -1;
             }
         }
     }
@@ -364,10 +338,7 @@ public class EncryptedMorseModule : MonoBehaviour {
         if (solved) return false;
         morsePos = -1;
         morseTick = 0;
-        binPos = -1;
-        binTick = 0;
         morseFrameCounter = 0;
-        binFrameCounter = 0;
         currentResponseIndex = 0;
         return false;
     }
@@ -387,22 +358,6 @@ public class EncryptedMorseModule : MonoBehaviour {
         }
         return false;
     }
-
-    bool OnBinSwitch() {
-        Audio.PlaySoundAtTransform("switch", transform);
-        if (solved) return false;
-        if (binEnabled) {
-            BinSwitchWireRenderer.material.color = switchWireOff;
-            binEnabled = false;
-        } else {
-            BinSwitchWireRenderer.material.color = switchWireOn;
-            binPos = -1;
-            binTick = 0;
-            binFrameCounter = 0;
-            binEnabled = true;
-        }
-        return false;
-    }
     #endregion
 
     #region Visual Methods
@@ -416,34 +371,6 @@ public class EncryptedMorseModule : MonoBehaviour {
         MorseLight.material = on ? MorseKeyMat : LightOffMat;
         MorseLightL.color = keyMorseC;
         MorseLightL.enabled = on;
-    }
-
-    void ShowBin0(bool on) {
-        BinLight0.material = on ? Bin0Mat : LightOffMat;
-        BinLight0L.color = binZero;
-        BinLight0L.enabled = on;
-        if (settings.Settings.ColorblindMode) {
-            BinLight1.material = LightOffMat;
-            BinLight1L.enabled = false;
-        } else {
-            BinLight1.material = on ? Bin0Mat : LightOffMat;
-            BinLight1L.color = binZero;
-            BinLight1L.enabled = on;
-        }
-    }
-
-    void ShowBin1(bool on) {
-        BinLight1.material = on ? Bin1Mat : LightOffMat;
-        BinLight1L.color = binOne;
-        BinLight1L.enabled = on;
-        if (settings.Settings.ColorblindMode) {
-            BinLight0.material = LightOffMat;
-            BinLight0L.enabled = false;
-        } else {
-            BinLight0.material = on ? Bin1Mat : LightOffMat;
-            BinLight0L.color = binOne;
-            BinLight0L.enabled = on;
-        }
     }
     #endregion
 
@@ -705,7 +632,7 @@ public class EncryptedMorseModule : MonoBehaviour {
     void SolveModule() {
         solved = true;
         MorseSwitchWireRenderer.material.color = switchWireSolved;
-        BinSwitchWireRenderer.material.color = switchWireSolved;
+        BinText.text = solvedText;
         BombModule.HandlePass();
     }
 
@@ -717,7 +644,7 @@ public class EncryptedMorseModule : MonoBehaviour {
     #region TwitchPlays
 
     #pragma warning disable 0414
-    string TwitchHelpMessage = "Transmit a response using 'submit .--...-'. Toggle the knob using 'toggle knob'. Toggle the morse and binary lights using 'toggle morse' and 'toggle binary'. Press the reset button using 'reset'.";
+    string TwitchHelpMessage = "Transmit a response using 'submit .--...-'. Toggle the knob using 'toggle knob'. Toggle the morse light using 'toggle morse'. Press the reset button using 'reset'.";
     #pragma warning restore 0414
 
     public void TwitchHandleForcedSolve() {
@@ -740,7 +667,6 @@ public class EncryptedMorseModule : MonoBehaviour {
             switch (cmd.Substring(7)) {
                 case "knob": return new KMSelectable[] { MorseKnob };
                 case "morse": return new KMSelectable[] { MorseSwitchWire };
-                case "binary": return new KMSelectable[] { BinSwitchWire };
                 default: throw new System.FormatException("Invalid command: '" + cmd + "'");
             }
         } else throw new System.FormatException("Invalid command: '" + cmd + "'");
