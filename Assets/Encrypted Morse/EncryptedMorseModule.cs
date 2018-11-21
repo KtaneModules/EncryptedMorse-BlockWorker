@@ -656,6 +656,7 @@ public class EncryptedMorseModule : MonoBehaviour {
         cmd = cmd.ToLowerInvariant().Trim();
         if (cmd == "reset") return new KMSelectable[] { ResetButton };
         else if (cmd.StartsWith("submit")) {
+            if (cmd.Length <= 7) throw new System.FormatException("Invalid command: '" + cmd + "'");
             var buttons = new List<KMSelectable>();
             foreach (char c in cmd.Substring(7)) {
                 if (c == '.') buttons.Add(DotButton);
@@ -664,6 +665,7 @@ public class EncryptedMorseModule : MonoBehaviour {
             }
             return buttons.ToArray();
         } else if (cmd.StartsWith("toggle")) {
+            if (cmd.Length <= 7) throw new System.FormatException("Invalid command: '" + cmd + "'");
             switch (cmd.Substring(7)) {
                 case "knob": return new KMSelectable[] { MorseKnob };
                 case "morse": return new KMSelectable[] { MorseSwitchWire };
